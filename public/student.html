@@ -9,19 +9,17 @@
     <script>
         var ajax = {
             post:function(url,data,handler){
-                var quest = new XMLHttpRequest();
+                var request = new XMLHttpRequest();
                 request.open('post',url,true);
-                request.setRequestHeader("");
+                request.setRequestHeader("Content-type","application/json");
+                request.send(JSON.stringify(data));
                 request.onreadystatechange = function(){
-                    if(request.readyState == 4){
+                    if(request.readyState ==4){
                         if(request.status == 200){
-                            var text = request.responseText;
-                            var json = JSON.parse(text);
-                            handler.call(this,json);
+                            handler.call(this,JSON.parse(request.responseText));
                         }
                     }
                 }
-
             },
             getJSON:function(url,handler){
                 var request = new XMLHttpRequest();
@@ -29,7 +27,7 @@
                 request.send();
                 request.onreadystatechange = function(){
                     if(request.readyState == 4){
-                        if(request.status == 200){
+                        if(request.status ==200){
                             var text = request.responseText;
                             var json = JSON.parse(text);
                             handler.call(this,json);
@@ -37,52 +35,59 @@
                     }
                 }
             }
-            
         }
-        window.onload = function(){
-            var form = document.forms[0];
-            var search = document.getElementById('search');
-            var param = {key:search.value};
-            form.onsubmit = function(event){
-                //ajax
-                // var action = form.action;
-                // var request = new XMLHttpRequest();
-                // request.open('POST',action,true);
-                // request.send(encodeFormData(param));
-                // //监听就绪状态的改变,当readyState的取值为4的时候，代表一次请求的完成
-                // request.onreadystatechange = function(){
-                //     if(request.readyState ==4){
-                //         //响应码
-                //         if(request.status == 200){
-                //             var data = JSON.parse(request.responseText);
-                //            updateData(data); 
-                //         }
-                //     }
-                // }
-                event.preventDefault();
+
+        var studentAPI = {
+            batchDelete:function(){
+            },
+            loadData:function(){
+                //清空原有数据
+                var tbody = document.getElementsByTagName("tbody")[0];
+                Array.prototype.slice.call(tbody.children,0).forEach(function(item){
+                    tbody.removeChild(item);
+                });
+
+                 //加载数据
+                ajax.getJSON("http://localhost:3000/student/findAll",function(data){
+                    data.forEach(function(item){
+                        var tbody = document.getElementsByTagName("tbody")[0];
+                        var newTr = document.createElement('tr');
+                        var newTd1 = document.createElement('td');
+                        newTd1.innerHTML = "<input type='checkbox' value='"+item.id+"'>";
+                        var newTd2 = document.createElement('td');
+                        newTd2.innerText = item.name;
+                        var newTd3 = document.createElement('td');
+                        newTd3.innerText = item.gender;
+                        var newTd4 = document.createElement('td');
+                        newTd4.innerText = item.birth;
+                        newTr.appendChild(newTd1);
+                        newTr.appendChild(newTd2);
+                        newTr.appendChild(newTd3);
+                        newTr.appendChild(newTd4);
+                        tbody.appendChild(newTr);
+                    });
+                });
             }
         }
-
-        function updateData(data){
-            data.forEach(function(item){
-                var tbody = document.getElementsByTagName("tbody")[0];
-                var newTr = document.createElement('tr');
-
-                var newTd1 = document.createElement('td');
-                newTd1.innerText = item.id;
-                var newTd2 = document.createElement('td');
-                newTd2.innerText = item.name;
-                var newTd3 = document.createElement('td');
-                newTd3.innerText = item.gender;
-                var newTd4 = document.createElement('td');
-                newTd4.innerText = item.birth;
-                newTr.appendChild(newTd1);
-                newTr.appendChild(newTd2);
-                newTr.appendChild(newTd3);
-                newTr.appendChild(newTd4);
-                tbody.appendChild(newTr);
-            });
+        //绑定按钮
+        window.onload = function(){
+            var form = document.forms[0];
+            var btns = document.getElementsByTagName("button");
+            form.onsubmit = function(event){
+                studentAPI.loadData();
+                event.preventDefault();
+            }
+            btns[2].onclick = function(){
+                //获取要删除的元素
+                var tbody = document.getElementsByTagName("tbody",[0]);
+                Array.prototype.slice.call(tbody.children,0).forEach(function(item){
+                    var inp = item.children[0].children[0];
+                    console.log(inp);
+                });
+            } 
         }
+
+        
         // function encodeFormData(data){
         //     if(!data){return "";} 
         //     var pairs = [];
@@ -104,18 +109,20 @@
 <body>
     <h2>学生管理</h2>
     <hr>
-    <form action="student/findAll">
+    <form action="student/findAll" method="post">
         <input type="search" placeholder="关键字" name="key" id="search">
         <input type="submit" value="搜索">
     </form>
     <table>
-        <tbody>
+        <thead>
             <tr>
                 <th>编号</th>
                 <th>姓名</th>
                 <th>性别</th>
                 <th>出生日期</th>
             </tr>
+        </thead>
+        <tbody>
             
         </tbody>
     </table>
